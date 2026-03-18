@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>모바일 신분증</title>
+
+<style>
+body {
+  margin:0;
+  font-family: -apple-system, BlinkMacSystemFont;
+  background:#eef1f5;
+}
+.screen { display:none; height:100vh; }
+.active { display:block; }
+#screen1 {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:white;
+}
+.header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:15px;
+  background:#dde3ea;
+}
+.menu { font-size:24px; }
+.card {
+  margin:15px;
+  padding:20px;
+  background:#f4f4f4;
+  border-radius:20px;
+  text-align:center;
+}
+img.profile {
+  width:120px;
+  height:120px;
+  border-radius:10px;
+  object-fit:cover;
+}
+.qr {
+  width:120px;
+  margin-top:10px;
+}
+.bar {
+  height:5px;
+  background:#ccc;
+  margin-top:10px;
+}
+.bar-inner {
+  height:100%;
+  background:#1e63c4;
+  width:0%;
+}
+.btn {
+  background:#1e63c4;
+  color:white;
+  padding:15px;
+  border-radius:15px;
+  text-align:center;
+  margin:15px;
+}
+.footer {
+  position:fixed;
+  bottom:0;
+  width:100%;
+  overflow:hidden;
+  background:linear-gradient(to right, #5aa, #74f);
+  color:white;
+}
+.marquee {
+  display:inline-block;
+  white-space:nowrap;
+  animation:move 10s linear infinite;
+}
+@keyframes move {
+  from { transform:translateX(100%); }
+  to { transform:translateX(-100%); }
+}
+</style>
+</head>
+
+<body>
+
+<div id="screen1" class="screen active">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/7/79/Flag_of_South_Korea.svg" width="80">
+</div>
+
+<div id="screen2" class="screen">
+  <div class="header">
+    <div>주민등록증모바일확인서비스</div>
+    <div class="menu" onclick="menuClick()">☰</div>
+  </div>
+
+  <div class="card">
+    <img id="photo" class="profile">
+    <h2 id="name"></h2>
+    <p id="birth"></p>
+    <p id="region"></p>
+
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=test" class="qr">
+
+    <div class="bar">
+      <div id="barInner" class="bar-inner"></div>
+    </div>
+
+    <div id="timeText">30초</div>
+  </div>
+
+  <div class="btn" onclick="goScreen(3)">상세정보 표시</div>
+</div>
+
+<div id="screen3" class="screen">
+  <div class="header">
+    <div>주민등록증모바일확인서비스</div>
+    <div class="menu" onclick="menuClick()">☰</div>
+  </div>
+
+  <div class="card">
+    <img id="photo2" class="profile">
+    <h2 id="name2"></h2>
+    <p id="idnum"></p>
+    <p id="address"></p>
+    <p id="city"></p>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="marquee">
+    캡쳐방지 시스템이 작동중입니다. 캡쳐방지 시스템이 작동중입니다. 캡쳐방지 시스템이 작동중입니다.
+  </div>
+</div>
+
+<input type="file" id="fileInput" style="display:none">
+
+<script>
+let clickCount = 0;
+
+let data = JSON.parse(localStorage.getItem("data")) || {
+  name:"최수현",
+  birth:"05.04.08",
+  region:"충청남도 아산시",
+  idnum:"050408-4860013",
+  address:"충청남도 아산시 ...",
+  city:"충청남도 아산시장",
+  photo:""
+};
+
+function loadData(){
+  name.innerText = data.name;
+  birth.innerText = data.birth;
+  region.innerText = data.region;
+
+  name2.innerText = data.name;
+  idnum.innerText = data.idnum;
+  address.innerText = data.address;
+  city.innerText = data.city;
+
+  let img = data.photo || "https://via.placeholder.com/120";
+  photo.src = img;
+  photo2.src = img;
+}
+loadData();
+
+function goScreen(n){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById("screen"+n).classList.add("active");
+}
+
+setTimeout(()=>{
+  goScreen(2);
+  startTimer();
+},3000);
+
+function startTimer(){
+  let time = 30;
+  let bar = document.getElementById("barInner");
+
+  let interval = setInterval(()=>{
+    time--;
+    document.getElementById("timeText").innerText = time + "초";
+    bar.style.width = ((30 - time) / 30 * 100) + "%";
+    if(time <= 0) clearInterval(interval);
+  },1000);
+}
+
+function menuClick(){
+  clickCount++;
+  if(clickCount >= 3){
+    clickCount = 0;
+    openEditor();
+  }
+}
+
+function openEditor(){
+  data.name = prompt("이름", data.name) || data.name;
+  data.birth = prompt("생일", data.birth) || data.birth;
+  data.region = prompt("지역", data.region) || data.region;
+  data.idnum = prompt("번호", data.idnum) || data.idnum;
+  data.address = prompt("주소", data.address) || data.address;
+  data.city = prompt("시장", data.city) || data.city;
+
+  if(confirm("사진 변경할래?")){
+    fileInput.click();
+  }
+
+  localStorage.setItem("data", JSON.stringify(data));
+  loadData();
+}
+
+fileInput.addEventListener("change", e=>{
+  let reader = new FileReader();
+  reader.onload = ()=>{
+    data.photo = reader.result;
+    localStorage.setItem("data", JSON.stringify(data));
+    loadData();
+  };
+  reader.readAsDataURL(e.target.files[0]);
+});
+</script>
+
+</body>
+</html>
